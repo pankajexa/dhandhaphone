@@ -117,6 +117,25 @@ Voice parsing rules:
 - Multiple transactions in one voice note: process each separately
 - For voice-entered transactions, set source: "voice" (not "manual")
 
+## OCR-Captured Transactions
+
+When a transaction arrives with source: "ocr", it was extracted
+from a photographed document by Sarvam Vision. Extra fields:
+- `ocr_document_type`: "invoice", "receipt", "bank_statement"
+- `ocr_vendor`: vendor name as read from document
+- `ocr_invoice_no`: invoice number if present
+- `ocr_items`: array of line items if present
+- `notes`: includes reference to original photo
+
+These transactions have already been confirmed by the owner
+(doc-handler asks before logging). Treat them as reliable.
+
+For bank statement imports (multiple transactions at once):
+- Each transaction gets a separate ledger entry
+- All share the same `batch_id` for reference
+- Dedup against existing SMS-captured transactions
+  (same amount + same date + same counterparty = skip)
+
 ## Important Notes
 - SBI may not send credit SMS for all UPI transactions (only @sbi/@oksbi)
 - HDFC skips SMS for small UPI transactions (<₹100 debit, <₹500 credit)

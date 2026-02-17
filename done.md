@@ -1,6 +1,6 @@
 # DhandhaPhone — Build Progress
 
-> Last updated: 2026-02-17
+> Last updated: 2026-02-18
 
 ---
 
@@ -199,6 +199,41 @@
 
 ---
 
+## Phase 13: Document Intelligence — Sarvam Vision OCR — DONE
+
+- [x] **Task 13.1:** Created shared Sarvam client (`lib/sarvam/sarvam-client.js`) — moved from lib/voice/ to shared location; added full Document Intelligence API lifecycle (processDocument, createDocJob, getUploadUrl, uploadFile, startDocJob, pollJobStatus, downloadJobOutput); ZIP output parsing (JSON/MD/HTML); markdown table extraction; HTML table extraction; document MIME type detection; longer timeout for document ops
+- [x] **Task 13.2:** Updated voice module imports — `lib/voice/sarvam-client.js` now re-exports from `lib/sarvam/sarvam-client.js` for backward compatibility; voice-handler.js and tts-generator.js continue working unchanged
+- [x] **Task 13.3:** Created document classifier (`lib/documents/doc-classifier.js`) — keyword-based scoring for invoice/receipt/business_card/bank_statement/price_list/stock_register/handwritten_note; multilingual keywords (Hindi, Telugu, Tamil, Kannada, Bengali, Marathi, Gujarati); caption hint override; structural analysis (table presence, text length)
+- [x] **Task 13.4:** Created document parser (`lib/documents/doc-parser.js`) — field extractors for Indian phone numbers, email, GSTIN (state+PAN+entity+Z+checksum format), currency amounts (₹/Rs/INR), Indian date formats (DD/MM/YYYY); business card parser; bank statement parser; price list parser; stock register parser; table row parsers with header detection
+- [x] **Task 13.5:** Created invoice extractor (`lib/documents/invoice-extractor.js`) — specialized for GST invoices, cash memos, kachha bills; vendor extraction (first non-keyword line); invoice number regex patterns; line item extraction from tables (with HSN/SAC) and text fallback; total/GST extraction including separate CGST+SGST addition; payment terms extraction
+- [x] **Task 13.6:** Created document handler (`lib/documents/doc-handler.js`) — main orchestrator: download from Telegram → Sarvam Vision OCR → classify → route → present; 8 document type handlers (invoice, receipt, business_card, bank_statement, price_list, handwritten_note, stock_register, generic); confirmation flow for financial data; caption-based classification hints; INR formatting; error handling with graceful fallback
+- [x] **Task 13.7:** Updated `lib/voice/voice-config.json` — added document_intelligence section (enabled, output format, timeout, max file size, supported formats, auto-classify, confirm before logging, temp dir)
+- [x] **Task 13.8:** Updated `config/SOUL.md` — added Document Processing Behavior section (8 document types, confirmation rules, extraction quality rules, GST detail extraction, photo reference storage)
+- [x] **Task 13.9:** Rewrote `skills/document-intel/SKILL.md` — replaced LLM vision approach with Sarvam Vision pipeline; documented full processing flow (download → OCR → classify → extract → confirm → update); added caption classification hints; documented business logic routing after confirmation; multilingual support via Sarvam
+- [x] **Task 13.10:** Updated `skills/sms-ledger/SKILL.md` — added OCR-Captured Transactions section (source: "ocr", extra fields: ocr_document_type, ocr_vendor, ocr_invoice_no, ocr_items; bank statement batch import with dedup)
+- [x] **Task 13.11:** Updated `lib/utils.js` — added ocrDir and documents PATHS
+- [x] **Task 13.12:** Updated `setup-dhandhaphone.sh` — added lib/sarvam and lib/documents directories to workspace creation and copy steps
+
+**Files created:**
+- `lib/sarvam/sarvam-client.js` (shared Sarvam client with voice + document methods)
+- `lib/documents/doc-handler.js` (document processing orchestrator)
+- `lib/documents/doc-classifier.js` (keyword-based document classification)
+- `lib/documents/doc-parser.js` (field extractors for Indian documents)
+- `lib/documents/invoice-extractor.js` (invoice/receipt specialized extraction)
+
+**Files modified:**
+- `lib/voice/sarvam-client.js` (re-export wrapper pointing to shared location)
+- `lib/voice/voice-config.json` (added document_intelligence section)
+- `config/SOUL.md` (Document Processing Behavior section)
+- `skills/document-intel/SKILL.md` (rewritten for Sarvam Vision)
+- `skills/sms-ledger/SKILL.md` (OCR-Captured Transactions section)
+- `lib/utils.js` (ocrDir and documents PATHS)
+- `setup-dhandhaphone.sh` (sarvam and documents directories)
+
+**npm dependency needed:** `adm-zip` (for parsing Sarvam Vision ZIP output)
+
+---
+
 ## Summary
 
 | Phase | Status | Files |
@@ -215,8 +250,9 @@
 | 10. Setup Automation | DONE | 2 files |
 | 11. Extended Skills Suite | DONE | 10 files |
 | 12. Voice (Phase 1) | DONE | 8 new + 5 modified |
+| 13. Document Intelligence (Sarvam Vision) | DONE | 5 new + 7 modified |
 
-**Total: 52 files created. All 12 phases complete. SMS parser tests: 10/10 passing.**
+**Total: 57 files created. All 13 phases complete. SMS parser tests: 10/10 passing.**
 
 ## What Needs Live Testing (requires Android + OpenClaw)
 
@@ -233,3 +269,12 @@
 - **Voice: Multi-language voice accuracy (Hindi, Tamil, Telugu, etc.)**
 - **Voice: Noisy environment STT accuracy (shop/traffic/kitchen)**
 - **Voice: End-to-end latency (voice in → voice out < 5 seconds)**
+- **OCR: Sarvam Vision Document Intelligence API connectivity**
+- **OCR: Invoice photo → structured extraction → ledger entry**
+- **OCR: Handwritten note → text extraction → agent processing**
+- **OCR: Business card → contact creation**
+- **OCR: Bank statement PDF → batch transaction import**
+- **OCR: Mixed-language documents (English headers + Hindi/Tamil items)**
+- **OCR: Low-quality photos (angled, shadowed, thermal print)**
+- **OCR: Caption-based classification hints**
+- **OCR: adm-zip package installation on Termux**

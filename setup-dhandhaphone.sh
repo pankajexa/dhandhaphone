@@ -12,7 +12,7 @@ REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # 1. Create directory structure
 echo "Creating workspace..."
-mkdir -p "$WORKSPACE"/{skills/{sms-ledger/scripts,business-memory/scripts,business-briefing/scripts,document-intel/scripts,notification-watch/scripts,accounting/scripts,gst-assistant/scripts,fraud-detect/scripts,credit-manager/scripts,price-memory/scripts},ledger,contacts,inventory,pending,sms,ocr,lib,lib/voice,accounting}
+mkdir -p "$WORKSPACE"/{skills/{sms-ledger/scripts,business-memory/scripts,business-briefing/scripts,document-intel/scripts,notification-watch/scripts,accounting/scripts,gst-assistant/scripts,fraud-detect/scripts,credit-manager/scripts,price-memory/scripts},ledger,contacts,inventory,pending,sms,ocr,lib,lib/voice,lib/sarvam,lib/documents,accounting}
 
 # 2. Copy skill files
 echo "Installing skills..."
@@ -32,6 +32,8 @@ echo "Installing shared libraries..."
 cp "$REPO_DIR/lib/"*.js "$WORKSPACE/lib/"
 cp "$REPO_DIR/lib/"*.sh "$WORKSPACE/lib/" 2>/dev/null || true
 cp -r "$REPO_DIR/lib/voice/" "$WORKSPACE/lib/voice/"
+cp -r "$REPO_DIR/lib/sarvam/" "$WORKSPACE/lib/sarvam/"
+cp -r "$REPO_DIR/lib/documents/" "$WORKSPACE/lib/documents/"
 
 # 4. Create symlinks from skills to shared lib
 echo "Linking shared scripts..."

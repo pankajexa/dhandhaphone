@@ -12,6 +12,17 @@
   "briefing_voice_enabled": true,
   "temp_audio_dir": "/tmp/dhandhaphone-audio",
 
+  "document_intelligence": {
+    "enabled": true,
+    "default_output_format": "json",
+    "job_timeout_ms": 60000,
+    "max_file_size_mb": 20,
+    "supported_formats": ["jpg", "jpeg", "png", "pdf"],
+    "auto_classify": true,
+    "confirm_before_logging": true,
+    "temp_dir": "/tmp/dhandhaphone-docs"
+  },
+
   "supported_languages": {
     "en":  { "stt_code": "en-IN", "tts_code": "en-IN",  "label": "English" },
     "hi":  { "stt_code": "hi-IN", "tts_code": "hi-IN",  "label": "Hindi" },
