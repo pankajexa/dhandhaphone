@@ -1,0 +1,1 @@
+../../lib/termux-bridge.sh

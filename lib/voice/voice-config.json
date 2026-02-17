@@ -1,0 +1,42 @@
+{
+  "sarvam_base_url": "https://api.sarvam.ai",
+  "default_model_tts": "bulbul:v3",
+  "default_model_stt": "saaras:v3",
+  "tts_pace": 1.0,
+  "tts_sample_rate": 22050,
+  "tts_audio_format": "ogg",
+  "stt_language": "auto",
+  "min_confidence_threshold": 0.6,
+  "voice_reply_min_length": 50,
+  "voice_reply_max_length": 2500,
+  "briefing_voice_enabled": true,
+  "temp_audio_dir": "/tmp/dhandhaphone-audio",
+
+  "supported_languages": {
+    "en":  { "stt_code": "en-IN", "tts_code": "en-IN",  "label": "English" },
+    "hi":  { "stt_code": "hi-IN", "tts_code": "hi-IN",  "label": "Hindi" },
+    "bn":  { "stt_code": "bn-IN", "tts_code": "bn-IN",  "label": "Bengali" },
+    "gu":  { "stt_code": "gu-IN", "tts_code": "gu-IN",  "label": "Gujarati" },
+    "kn":  { "stt_code": "kn-IN", "tts_code": "kn-IN",  "label": "Kannada" },
+    "ml":  { "stt_code": "ml-IN", "tts_code": "ml-IN",  "label": "Malayalam" },
+    "mr":  { "stt_code": "mr-IN", "tts_code": "mr-IN",  "label": "Marathi" },
+    "or":  { "stt_code": "or-IN", "tts_code": "or-IN",  "label": "Odia" },
+    "pa":  { "stt_code": "pa-IN", "tts_code": "pa-IN",  "label": "Punjabi" },
+    "ta":  { "stt_code": "ta-IN", "tts_code": "ta-IN",  "label": "Tamil" },
+    "te":  { "stt_code": "te-IN", "tts_code": "te-IN",  "label": "Telugu" }
+  },
+
+  "language_ui_strings": {
+    "en": { "heard": "Heard", "processing": "Processing...", "repeat": "Could you say that again?", "error": "Voice processing failed. Please type your message.", "too_short": "Very short voice note. Did you want to say something?" },
+    "hi": { "heard": "Suna", "processing": "Sun raha hoon...", "repeat": "Dobara bol dijiye?", "error": "Voice nahi samajh aaya. Type kar dijiye.", "too_short": "Bahut chhota voice note tha. Kuch kehna chahte the?" },
+    "te": { "heard": "Vinna", "processing": "Vintunna...", "repeat": "Malli cheppandi?", "error": "Voice ardam kaaledu. Type cheyandi.", "too_short": "Chala chinna voice note. Emaina cheppaalanukunnaara?" },
+    "ta": { "heard": "Kettadhu", "processing": "Kelkiren...", "repeat": "Mendum sollungal?", "error": "Voice puriyala. Type pannunga.", "too_short": "Romba short voice note. Edhaavadhu solla ninaitheengala?" },
+    "kn": { "heard": "Kelide", "processing": "Kelistiddene...", "repeat": "Matte heli?", "error": "Voice arthaagalilla. Type maadi.", "too_short": "Tumba short voice note. Enaadru helabeku iddra?" },
+    "bn": { "heard": "Shunlam", "processing": "Shunchhi...", "repeat": "Abar bolun?", "error": "Voice bojha jaye ni. Type korun.", "too_short": "Khub chhoto voice note. Kichu bolte cheyechilen?" },
+    "gu": { "heard": "Sambhalyu", "processing": "Sambhali rahyo chhu...", "repeat": "Farthi bolo?", "error": "Voice samjhayu nahi. Type karo.", "too_short": "Ghanu nanu voice note. Kaik kehvu hatu?" },
+    "mr": { "heard": "Aikla", "processing": "Aiktoy...", "repeat": "Parat sanga?", "error": "Voice samjala nahi. Type kara.", "too_short": "Far short voice note. Kahi sangaycha hota?" },
+    "ml": { "heard": "Kettu", "processing": "Kelkkunnu...", "repeat": "Veendum parayoo?", "error": "Voice manasilayilla. Type cheyyoo.", "too_short": "Valare short voice note. Enthenkkilum parayaan ullathayirunno?" },
+    "or": { "heard": "Sunili", "processing": "Sunuchu...", "repeat": "Aau thare kahile?", "error": "Voice bujhi parili nahin. Type karile.", "too_short": "Bahut chhota voice note. Kichhi kahiba chaahunthile?" },
+    "pa": { "heard": "Suneya", "processing": "Sun riha haan...", "repeat": "Dobara dasso?", "error": "Voice samajh nahi aayi. Type karo ji.", "too_short": "Bahut chhota voice note. Kujh kehnaa chaunde si?" }
+  }
+}

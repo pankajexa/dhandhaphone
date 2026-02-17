@@ -1,0 +1,13 @@
+{
+  "counterparty_rules": {},
+  "keyword_rules": [
+    {"pattern": "rent|lease|kiraya", "category": "rent"},
+    {"pattern": "salary|wages|tankhwah", "category": "salary"},
+    {"pattern": "electric|bijli|BESCOM|TSSPDCL|MSEDCL", "category": "utilities"},
+    {"pattern": "GST|tax|challan", "category": "gst-payment"},
+    {"pattern": "Swiggy|Zomato|Amazon|Flipkart", "category": "platform-income"},
+    {"pattern": "interest|byaj", "category": "interest"},
+    {"pattern": "delivery|transport|freight|shipping", "category": "transport"}
+  ],
+  "last_updated": "2026-02-18"
+}

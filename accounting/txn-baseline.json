@@ -1,0 +1,11 @@
+{
+  "avg_daily_credits": 0,
+  "avg_daily_debits": 0,
+  "avg_credit_amount": 0,
+  "avg_debit_amount": 0,
+  "max_normal_credit": 50000,
+  "max_normal_debit": 50000,
+  "usual_active_hours": {"start": 7, "end": 22},
+  "regular_counterparties": [],
+  "last_recalculated": null
+}

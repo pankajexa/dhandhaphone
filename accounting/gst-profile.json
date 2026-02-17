@@ -1,0 +1,11 @@
+{
+  "gstin": null,
+  "scheme": "regular",
+  "state_code": null,
+  "filing_frequency": "monthly",
+  "last_filed": {
+    "gstr1": null,
+    "gstr3b": null
+  },
+  "notes": "Owner to provide GSTIN during setup"
+}

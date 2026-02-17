@@ -1,0 +1,27 @@
+# API keys — NEVER commit
+.env
+
+# Claude Code local settings
+.claude/
+
+# Anonymization map (contains real names ↔ IDs)
+.anon-map.json
+
+# Node
+node_modules/
+
+# Temp files
+/tmp/
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Logs
+*.log

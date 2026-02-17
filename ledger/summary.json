@@ -1,0 +1,6 @@
+{
+  "today": {"credits": 0, "debits": 0, "count": 0, "date": ""},
+  "this_week": {"credits": 0, "debits": 0, "count": 0, "week_start": ""},
+  "this_month": {"credits": 0, "debits": 0, "count": 0, "month": ""},
+  "last_updated": ""
+}
