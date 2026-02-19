@@ -31,10 +31,41 @@ This is normally called by the sms-poll cron job every 5 minutes.
 You can also run it manually if the user asks "check for new payments."
 
 ## How to Read Ledger Data
+
+### Preferred: SQLite Database
+Use the DB functions from `workspace/lib/utils.js`:
+```javascript
+const { getDB } = require('workspace/lib/utils');
+const db = getDB();
+
+// Today's summary
+db.getDailySummary('2026-02-18');
+
+// Filtered transactions
+db.getTransactions({ type: 'credit', from_date: '2026-02-18', to_date: '2026-02-18' });
+
+// Method breakdown for a period
+db.getMethodBreakdown('2026-02-01', '2026-02-28');
+
+// Top counterparties
+db.getTopCounterparties('2026-02-01', '2026-02-28', 5);
+
+// Revenue by day
+db.getRevenueByDay('2026-02-01', '2026-02-28');
+
+// Complex ad-hoc query (SELECT only)
+db.agentQuery('SELECT counterparty_name, SUM(amount) as total FROM transactions WHERE type = ? AND transaction_date >= ? GROUP BY counterparty_name ORDER BY total DESC LIMIT 5', ['credit', '2026-02-01']);
+```
+
+### CLI query tool (uses DB with flat-file fallback)
+```bash
+node workspace/skills/sms-ledger/scripts/ledger-query.js --today --type credit
+```
+
+### Flat file fallback
 - Read summary for quick stats: `cat workspace/ledger/summary.json`
 - Read current month transactions: `cat workspace/ledger/YYYY-MM.jsonl`
 - Search for specific transactions: `grep "SHARMA" workspace/ledger/2026-02.jsonl`
-- Query with filters: `node workspace/skills/sms-ledger/scripts/ledger-query.js --today --type credit`
 
 ## Transaction Schema
 Each line in the JSONL file:
@@ -68,10 +99,11 @@ Each line in the JSONL file:
 ## Answering Financial Questions
 
 When user asks about money:
-1. Read `workspace/ledger/summary.json` for quick answers
-2. For detailed queries, use ledger-query.js or grep the JSONL file
-3. Always respond with actual numbers from the ledger, not estimates
-4. Format amounts in Indian style: ₹5,000 not $5000
+1. **Preferred:** Use `db.getDailySummary()`, `db.getTransactions()`, etc.
+2. Fallback: Read `workspace/ledger/summary.json` for quick answers
+3. For detailed queries, use ledger-query.js or grep the JSONL file
+4. Always respond with actual numbers from the data, not estimates
+5. Format amounts in Indian style: ₹5,000 not $5000
 
 Examples (user may ask in ANY Indian language — respond in same language):
 - "Aaj kitna aaya?" / "Inniki evvalavu vandhudhu?" / "Today's revenue?" → Read summary.today.credits

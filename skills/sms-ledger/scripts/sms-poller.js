@@ -10,7 +10,7 @@ const libDir = path.join(__dirname, '..', '..', '..', 'lib');
 const { readSMS, getNotifications } = require(path.join(libDir, 'termux-api'));
 const { parseBankSMS, parseUPINotification } = require('./sms-parser');
 const { PATHS, readJSON, writeJSON, appendJSONL, readJSONL,
-        currentMonth, generateTxnId, nowIST } = require(path.join(libDir, 'utils'));
+        currentMonth, generateTxnId, nowIST, getDB } = require(path.join(libDir, 'utils'));
 
 async function pollAndProcess() {
   const results = { new_transactions: [], errors: [] };
@@ -50,8 +50,27 @@ async function pollAndProcess() {
     );
     if (isDupe) continue;
 
-    // Append to ledger
+    // Append to ledger (flat file)
     appendJSONL(PATHS.ledger(currentMonth()), txn);
+
+    // Dual-write to SQLite
+    try {
+      const db = getDB();
+      const txnDate = txn.ts ? txn.ts.split('T')[0] : new Date().toISOString().split('T')[0];
+      const dbId = db.addTransaction({
+        type: txn.type, amount: txn.amount,
+        counterparty_name: txn.counterparty || null,
+        method: txn.method || 'OTHER', source: 'sms',
+        description: txn.notes || null,
+        reference_id: txn.ref || null,
+        original_message: txn.raw || null,
+        transaction_date: txnDate,
+      });
+      db.markProcessed(txn.amount, txnDate, txn.ref, 'sms', dbId);
+    } catch (e) {
+      console.error('[DB] Dual-write failed:', e.message);
+    }
+
     results.new_transactions.push(txn);
   }
 
@@ -96,6 +115,23 @@ async function pollAndProcess() {
       };
 
       appendJSONL(PATHS.ledger(currentMonth()), txn);
+
+      // Dual-write to SQLite
+      try {
+        const db = getDB();
+        const txnDate = txn.ts ? txn.ts.split('T')[0] : new Date().toISOString().split('T')[0];
+        const dbId = db.addTransaction({
+          type: txn.type, amount: txn.amount,
+          counterparty_name: txn.counterparty || null,
+          method: txn.method || 'OTHER', source: parsed.source || 'notification',
+          original_message: txn.raw || null,
+          transaction_date: txnDate,
+        });
+        db.markProcessed(txn.amount, txnDate, null, parsed.source || 'notification', dbId);
+      } catch (e2) {
+        console.error('[DB] Notification dual-write failed:', e2.message);
+      }
+
       results.new_transactions.push(txn);
     }
   } catch (e) {

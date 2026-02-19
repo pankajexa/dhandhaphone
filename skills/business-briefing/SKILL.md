@@ -19,13 +19,32 @@ reports, and weekly analyses. Reads all workspace data files and
 presents actionable insights in the owner's preferred language.
 
 ## Data Sources
+
+### Preferred: SQLite Database
+Use DB functions from `workspace/lib/utils.js`:
+```javascript
+const { getDB } = require('workspace/lib/utils');
+const db = getDB();
+
+db.getDailySummary('2026-02-18');        // today's numbers
+db.getDateRangeSummary(from, to);        // period totals
+db.getReceivables();                     // pending receivables
+db.getPayables();                        // pending payables
+db.getLowStockItems();                   // low stock alerts
+db.getPendingActions();                  // pending actions
+db.getTopCounterparties(from, to, 5);    // top customers
+db.getRevenueByDay(from, to);           // daily trend
+db.getMethodBreakdown(from, to);         // cash vs UPI vs card
+```
+
+### Flat file fallback
 1. `workspace/ledger/summary.json` — financial stats
 2. `workspace/contacts/contacts.json` — pending receivables/payables
 3. `workspace/inventory/stock.json` — low stock alerts
 4. `workspace/pending/actions.json` — pending actions and reminders
 5. `workspace/ledger/YYYY-MM.jsonl` — detailed transaction history
 
-## Morning Briefing (7 AM Daily)
+## Morning Briefing (at `config.get('briefing_morning_time')`, default 7:00 AM)
 
 Read these files and compose a brief, actionable summary:
 1. `workspace/ledger/summary.json` — yesterday's numbers
@@ -59,7 +78,7 @@ NOTE: Deliver this briefing in the owner's language. Examples:
 - If yesterday was good, celebrate briefly
 - ALWAYS use the owner's language — detect from past conversations
 
-## End-of-Day Summary (9 PM Daily)
+## End-of-Day Summary (at `config.get('eod_summary_time')`, default 9:00 PM)
 
 ### Template (adapt to owner's language):
 ```
@@ -78,7 +97,7 @@ Goodnight! 🌙
 - If it was a good day (above average), say so
 - Deliver in the owner's language
 
-## Weekly Report (Sunday 8 PM)
+## Weekly Report (`config.get('weekly_report_day')` at `config.get('weekly_report_time')`, default Sunday 8:00 PM)
 
 ### Template (adapt to owner's language):
 ```

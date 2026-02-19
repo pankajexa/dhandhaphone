@@ -49,5 +49,107 @@
     "ml": { "heard": "Kettu", "processing": "Kelkkunnu...", "repeat": "Veendum parayoo?", "error": "Voice manasilayilla. Type cheyyoo.", "too_short": "Valare short voice note. Enthenkkilum parayaan ullathayirunno?" },
     "or": { "heard": "Sunili", "processing": "Sunuchu...", "repeat": "Aau thare kahile?", "error": "Voice bujhi parili nahin. Type karile.", "too_short": "Bahut chhota voice note. Kichhi kahiba chaahunthile?" },
     "pa": { "heard": "Suneya", "processing": "Sun riha haan...", "repeat": "Dobara dasso?", "error": "Voice samajh nahi aayi. Type karo ji.", "too_short": "Bahut chhota voice note. Kujh kehnaa chaunde si?" }
+  },
+
+  "onboarding_strings": {
+    "en": {
+      "welcome": "Hi! I'm DhandhaPhone, your AI business assistant. What's your name, and what kind of business do you run?",
+      "confirm": "Got it. Is this correct?",
+      "complete": "All set! You can now tell me about your business — transactions, stock, customers. I'll track everything.",
+      "ask_name": "What's your name?",
+      "ask_business": "What's the name of your business?",
+      "ask_type": "What type of business is it? Shop, restaurant, salon...?",
+      "ask_city": "Which city or town is your business in?"
+    },
+    "hi": {
+      "welcome": "Namaste! Main DhandhaPhone hoon — aapka AI business assistant. Aapka naam kya hai, aur kya business karte hain?",
+      "confirm": "Sahi hai?",
+      "complete": "Setup ho gaya! Ab mujhe apne business ke baare mein batao — transactions, stock, customers. Main sab track karunga.",
+      "ask_name": "Aapka naam kya hai?",
+      "ask_business": "Aapki shop ya business ka naam kya hai?",
+      "ask_type": "Kya business karte hain? Kirana, hardware, salon...?",
+      "ask_city": "Kahan se hain aap? Kaun sa sheher?"
+    },
+    "ta": {
+      "welcome": "Vanakkam! Naan DhandhaPhone — unga AI business assistant. Unga per enna, enna business panreenga?",
+      "confirm": "Correctaa?",
+      "complete": "Setup mudinjiruchu! Ippovae business details sollunga — transactions, stock, customers. Ellaam track pannuven.",
+      "ask_name": "Unga per enna?",
+      "ask_business": "Unga kadai per enna?",
+      "ask_type": "Enna maari business? Kirana, hardware, salon...?",
+      "ask_city": "Enga irukku unga kadai? Endha ooru?"
+    },
+    "te": {
+      "welcome": "Namaskaram! Nenu DhandhaPhone — mee AI business assistant. Mee peru enti, enti business chestunnaru?",
+      "confirm": "Correct ga undi?",
+      "complete": "Setup ayyindi! Ippudu mee business gurinchi cheppandi — transactions, stock, customers. Nenu anni track chesta.",
+      "ask_name": "Mee peru enti?",
+      "ask_business": "Mee shop peru enti?",
+      "ask_type": "Enti business? Kirana, hardware, salon...?",
+      "ask_city": "Mee shop ekkada undi? Endha ooru?"
+    },
+    "kn": {
+      "welcome": "Namaskara! Naanu DhandhaPhone — nimma AI business assistant. Nimma hesaru enu, enu business maadtiddira?",
+      "confirm": "Sari ideyaa?",
+      "complete": "Setup aaytu! Eega nimma business bagge heli — transactions, stock, customers. Naan ellaa track maadtini.",
+      "ask_name": "Nimma hesaru enu?",
+      "ask_business": "Nimma angadi hesaru enu?",
+      "ask_type": "Enu business? Kirana, hardware, salon...?",
+      "ask_city": "Nimma angadi ellidey? Yaava ooru?"
+    },
+    "ml": {
+      "welcome": "Namaskkaram! Njan DhandhaPhone — ningalude AI business assistant. Ningalude perentha, entha business aanu cheyyunnath?",
+      "confirm": "Sheri aano?",
+      "complete": "Setup kazhinjhu! Ippol ningalude business patti parayu — transactions, stock, customers. Njan ellaam track cheyyam.",
+      "ask_name": "Ningalude perentha?",
+      "ask_business": "Ningalude kadayude perentha?",
+      "ask_type": "Entha business? Kirana, hardware, salon...?",
+      "ask_city": "Ningalude kada eviде aanu? Etha ooru?"
+    },
+    "bn": {
+      "welcome": "Namaskar! Ami DhandhaPhone — apnar AI business assistant. Apnar naam ki, ar ki business koren?",
+      "confirm": "Thik aachhe?",
+      "complete": "Setup hoye gechhe! Ebar apnar business er kotha bolun — transactions, stock, customers. Ami shob track korbo.",
+      "ask_name": "Apnar naam ki?",
+      "ask_business": "Apnar dokan er naam ki?",
+      "ask_type": "Ki business koren? Kirana, hardware, salon...?",
+      "ask_city": "Apnar dokan kothay? Kon shehor?"
+    },
+    "mr": {
+      "welcome": "Namaskar! Mi DhandhaPhone — tumcha AI business assistant. Tumcha naav kay, aani kay business karta?",
+      "confirm": "Barobar ahe ka?",
+      "complete": "Setup zala! Aata tumchya business baddal sanga — transactions, stock, customers. Mi sarv track karen.",
+      "ask_name": "Tumcha naav kay?",
+      "ask_business": "Tumchya dukaan cha naav kay?",
+      "ask_type": "Kay business karta? Kirana, hardware, salon...?",
+      "ask_city": "Tumchi dukaan kuthe ahe? Kon shahar?"
+    },
+    "gu": {
+      "welcome": "Namaskar! Hu DhandhaPhone chhu — tamaro AI business assistant. Tamaru naam shu chhe, ane shu business karo chho?",
+      "confirm": "Barobar chhe?",
+      "complete": "Setup thayi gayo! Have tamara business vishe kahejo — transactions, stock, customers. Hu badhu track karish.",
+      "ask_name": "Tamaru naam shu chhe?",
+      "ask_business": "Tamari dukaan nu naam shu chhe?",
+      "ask_type": "Shu business karo chho? Kirana, hardware, salon...?",
+      "ask_city": "Tamari dukaan kyaan chhe? Kon sheher?"
+    },
+    "pa": {
+      "welcome": "Sat Sri Akaal! Main DhandhaPhone haan — tuhaada AI business assistant. Tuhaada naam ki aa, te ki business karde ho?",
+      "confirm": "Theek aa?",
+      "complete": "Setup ho gaya! Hun apne business baare dasso — transactions, stock, customers. Main sab track karunga.",
+      "ask_name": "Tuhaada naam ki aa?",
+      "ask_business": "Tuhadi dukaan da naam ki aa?",
+      "ask_type": "Ki business karde ho? Kirana, hardware, salon...?",
+      "ask_city": "Tuhadi dukaan kithe aa? Kihra sheher?"
+    },
+    "or": {
+      "welcome": "Namaskar! Mun DhandhaPhone — apananka AI business assistant. Apananka naama ki, aaU ki business karanti?",
+      "confirm": "Thik achhi?",
+      "complete": "Setup hei gala! Ebe apananka business kahile — transactions, stock, customers. Mu sabu track karibi.",
+      "ask_name": "Apananka naama ki?",
+      "ask_business": "Apananka dukaan naama ki?",
+      "ask_type": "Ki business karanti? Kirana, hardware, salon...?",
+      "ask_city": "Apananka dukaan keuNthi? Kau sahara?"
+    }
   }
 }

@@ -12,7 +12,7 @@ REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # 1. Create directory structure
 echo "Creating workspace..."
-mkdir -p "$WORKSPACE"/{skills/{sms-ledger/scripts,business-memory/scripts,business-briefing/scripts,document-intel/scripts,notification-watch/scripts,accounting/scripts,gst-assistant/scripts,fraud-detect/scripts,credit-manager/scripts,price-memory/scripts},ledger,contacts,inventory,pending,sms,ocr,lib,lib/voice,lib/sarvam,lib/documents,accounting}
+mkdir -p "$WORKSPACE"/{skills/{sms-ledger/scripts,business-memory/scripts,business-briefing/scripts,document-intel/scripts,notification-watch/scripts,accounting/scripts,gst-assistant/scripts,fraud-detect/scripts,credit-manager/scripts,price-memory/scripts},ledger,contacts,inventory,pending,sms,ocr,lib,lib/voice,lib/sarvam,lib/documents,lib/db,lib/onboarding,lib/brain,accounting,backups,knowledge/{gst,indian-business,inventory,pricing},gateway/ingestion}
 
 # 2. Copy skill files
 echo "Installing skills..."
@@ -34,6 +34,14 @@ cp "$REPO_DIR/lib/"*.sh "$WORKSPACE/lib/" 2>/dev/null || true
 cp -r "$REPO_DIR/lib/voice/" "$WORKSPACE/lib/voice/"
 cp -r "$REPO_DIR/lib/sarvam/" "$WORKSPACE/lib/sarvam/"
 cp -r "$REPO_DIR/lib/documents/" "$WORKSPACE/lib/documents/"
+cp -r "$REPO_DIR/lib/db/" "$WORKSPACE/lib/db/"
+cp -r "$REPO_DIR/lib/onboarding/" "$WORKSPACE/lib/onboarding/"
+cp -r "$REPO_DIR/lib/brain/" "$WORKSPACE/lib/brain/"
+cp -r "$REPO_DIR/knowledge/" "$WORKSPACE/knowledge/"
+
+# 3b. Copy gateway/ingestion modules
+echo "Installing gateway ingestion modules..."
+cp "$REPO_DIR/gateway/ingestion/"*.js "$WORKSPACE/gateway/ingestion/"
 
 # 4. Create symlinks from skills to shared lib
 echo "Linking shared scripts..."
@@ -62,6 +70,42 @@ echo "Initializing data..."
 # 7. Make scripts executable
 chmod +x "$WORKSPACE"/skills/*/scripts/*.sh 2>/dev/null || true
 chmod +x "$WORKSPACE"/lib/*.sh 2>/dev/null || true
+chmod +x "$WORKSPACE"/gateway/ingestion/notification-poller.js
+
+# 7b. Set up SQLite database
+echo "Setting up SQLite database..."
+NODE_VERSION=$(node -e "console.log(process.versions.node.split('.')[0])" 2>/dev/null || echo "0")
+NODE_MINOR=$(node -e "console.log(process.versions.node.split('.')[1])" 2>/dev/null || echo "0")
+
+if [ "$NODE_VERSION" -ge 23 ] || ([ "$NODE_VERSION" -eq 22 ] && [ "$NODE_MINOR" -ge 5 ]); then
+  echo "Node.js $NODE_VERSION.$NODE_MINOR detected — using built-in node:sqlite"
+else
+  echo "Node.js $NODE_VERSION.$NODE_MINOR — installing node-sqlite3-wasm fallback..."
+  if [ ! -f "$WORKSPACE/package.json" ]; then
+    echo '{"name":"dhandhaphone-workspace","private":true,"dependencies":{"node-sqlite3-wasm":"^0.8.0"}}' > "$WORKSPACE/package.json"
+  fi
+  cd "$WORKSPACE" && npm install --production 2>/dev/null || echo "npm install failed — install node-sqlite3-wasm manually"
+  cd "$REPO_DIR"
+fi
+
+# Initialize DB schema
+echo "Initializing database schema..."
+DHANDHA_WORKSPACE="$WORKSPACE" node -e "
+  try {
+    const { getDB } = require('$WORKSPACE/lib/utils');
+    const db = getDB();
+    console.log('[DB] Schema initialized successfully');
+    db.close();
+  } catch(e) {
+    console.error('[DB] Init failed:', e.message);
+  }
+" 2>/dev/null || echo "DB init deferred — will initialize on first use"
+
+# Import legacy flat-file data if exists
+if [ -f "$WORKSPACE/contacts/contacts.json" ] || ls "$WORKSPACE/ledger/"*.jsonl 1>/dev/null 2>&1; then
+  echo "Importing existing data into SQLite..."
+  DHANDHA_WORKSPACE="$WORKSPACE" node "$WORKSPACE/lib/db/import-legacy.js" 2>/dev/null || echo "Legacy import deferred"
+fi
 
 # 8. Set up bionic bypass
 echo "Configuring Bionic Bypass..."
@@ -110,19 +154,31 @@ fi
 # Symlink .env into workspace so lib/env.js can find it
 ln -sf "$REPO_DIR/.env" "$WORKSPACE/../.env" 2>/dev/null || true
 
+# 11. Launch onboarding wizard
+echo ""
+echo "Starting DhandhaPhone Setup Wizard..."
+DHANDHA_WORKSPACE="$WORKSPACE" node -e "
+  try {
+    require('$WORKSPACE/lib/onboarding/server').start(3456);
+  } catch(e) {
+    console.error('Onboarding server failed:', e.message);
+  }
+" &
+ONBOARDING_PID=$!
+sleep 1
+
 echo ""
 echo "DhandhaPhone installed!"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "STEP 1: Add your API keys to .env"
+echo "STEP 1: Complete Setup"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "  Edit: $REPO_DIR/.env"
+echo "  Option A: Open the setup wizard in your browser:"
+echo "    http://localhost:3456"
 echo ""
-echo "  Required keys:"
-echo "  ANTHROPIC_API_KEY  — Get at https://console.anthropic.com/settings/keys"
-echo "  SARVAM_API_KEY     — Get at https://dashboard.sarvam.ai (free ₹1,000)"
-echo "  TELEGRAM_BOT_TOKEN — Get from @BotFather on Telegram"
+echo "  Option B: Just message your Telegram bot!"
+echo "    It will walk you through setup by voice in your language."
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "STEP 2: Run OpenClaw onboarding"

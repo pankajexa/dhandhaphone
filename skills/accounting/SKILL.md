@@ -19,6 +19,30 @@ running P&L statements, tracks expense/income by category, and answers
 profitability questions. Turns raw transaction data into business insights.
 
 ## Data Locations
+
+### Preferred: SQLite Database
+Use DB functions from `workspace/lib/utils.js`:
+```javascript
+const { getDB } = require('workspace/lib/utils');
+const db = getDB();
+
+// Category management
+db.getCategoryRules();
+db.addCategoryRule({ category, match_type: 'keyword', match_value, priority });
+db.categorizeTransaction(txn);          // auto-categorize
+db.updateTransactionCategory(txnId, category);
+
+// P&L and reports
+db.getDateRangeSummary(from, to);       // income vs expenses
+db.getMethodBreakdown(from, to);        // by payment method
+db.saveMonthlyReport(month, 'pnl', data);
+db.getMonthlyReport(month, 'pnl');
+
+// Ad-hoc queries
+db.agentQuery('SELECT category, SUM(amount) as total FROM transactions WHERE type = ? AND transaction_date BETWEEN ? AND ? AND is_deleted = 0 GROUP BY category ORDER BY total DESC', ['debit', '2026-02-01', '2026-02-28']);
+```
+
+### Flat file fallback
 - Transaction ledger: `workspace/ledger/YYYY-MM.jsonl`
 - Summary: `workspace/ledger/summary.json`
 - Category rules: `workspace/accounting/categories.json`

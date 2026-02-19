@@ -21,6 +21,25 @@ firmer over time. Generates aging reports and helps recover overdue money.
 This is critical for Indian SMBs where udhaar is the norm.
 
 ## Data Locations
+
+### Preferred: SQLite Database
+Use DB functions from `workspace/lib/utils.js`:
+```javascript
+const { getDB } = require('workspace/lib/utils');
+const db = getDB();
+
+db.getReceivables();                     // who owes us (with days overdue)
+db.getPayables();                        // who we owe
+db.getCreditEntries({ contact_id, is_settled: 0 }); // unsettled credit
+db.addCreditEntry({ contact_id, type: 'gave', amount, due_date });
+db.settleCreditEntry(id);
+db.updateContactBalance(id, delta);
+db.addReminder({ contact_id, amount, message_draft, scheduled_at });
+db.getPendingReminders();
+db.updateReminderStatus(id, 'sent', sentAt);
+```
+
+### Flat file fallback
 - Contacts (with balances): `workspace/contacts/contacts.json`
 - Pending actions: `workspace/pending/actions.json`
 - Reminder log: `workspace/pending/reminders.jsonl`

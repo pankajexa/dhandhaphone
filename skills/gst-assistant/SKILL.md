@@ -20,6 +20,27 @@ GST-compliant invoice details. Designed for Indian SMBs under regular
 or composition scheme.
 
 ## Data Locations
+
+### Preferred: SQLite Database
+Use DB functions from `workspace/lib/utils.js`:
+```javascript
+const { getDB } = require('workspace/lib/utils');
+const db = getDB();
+
+// GST profile (stored in owner_profile table)
+db.getGSTProfile();                      // returns { gstin, scheme, state_code, ... }
+db.setProfile('gst_profile', { gstin, scheme, state_code, filing_frequency });
+
+// ITC / P&L reports
+db.getMonthlyReport('2026-02', 'itc');   // ITC data
+db.saveMonthlyReport('2026-02', 'itc', { input_gst_paid, output_gst_collected, net_liability });
+db.getMonthlyReport('2026-02', 'pnl');   // P&L data
+
+// Transaction queries for GST calculation
+db.agentQuery('SELECT category, SUM(amount) as total FROM transactions WHERE type = ? AND transaction_date BETWEEN ? AND ? AND is_deleted = 0 GROUP BY category', ['debit', '2026-02-01', '2026-02-28']);
+```
+
+### Flat file fallback
 - GST profile: `workspace/accounting/gst-profile.json`
 - ITC tracker: `workspace/accounting/itc-YYYY-MM.json`
 - Filing calendar: embedded in this skill (see below)
@@ -39,7 +60,13 @@ or composition scheme.
   "notes": "Owner to provide GSTIN during setup"
 }
 ```
-- `scheme`: "regular" (monthly filing, ITC eligible) or "composition" (quarterly, no ITC)
+
+Note: GST scheme and filing frequency are configurable via `config.get('gst_scheme')`
+(default "regular") and `config.get('gst_filing_frequency')` (default "monthly").
+The owner can change these via conversation (see SOUL.md).
+
+- `scheme`: scheme from `config.get('gst_scheme')` (default "regular") — "regular" (monthly filing, ITC eligible) or "composition" (quarterly, no ITC)
+- `filing_frequency`: frequency from `config.get('gst_filing_frequency')` (default "monthly")
 - If GSTIN is null, remind owner to set it up
 
 ## Common GST Rates (India)

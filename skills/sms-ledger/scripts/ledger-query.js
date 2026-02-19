@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // Query ledger for specific transactions
 // Usage: node ledger-query.js [--today|--week|--month] [--type credit|debit] [--name SHARMA] [--min 1000]
+// Queries SQLite DB (preferred) with flat-file fallback
 
 const path = require('path');
 const libDir = path.join(__dirname, '..', '..', '..', 'lib');
-const { PATHS, readJSONL, currentMonth, todayISO } = require(path.join(libDir, 'utils'));
+const { PATHS, readJSONL, currentMonth, todayISO, getDB } = require(path.join(libDir, 'utils'));
 
 const args = process.argv.slice(2);
 const flags = {};
@@ -15,51 +16,90 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-const txns = readJSONL(PATHS.ledger(currentMonth()));
-let filtered = txns;
-
-// Date filters
-const today = todayISO();
-if (flags.today) {
-  filtered = filtered.filter(t => t.ts && t.ts.startsWith(today));
-}
-if (flags.yesterday) {
-  const d = new Date(); d.setDate(d.getDate() - 1);
-  const yday = d.toISOString().split('T')[0];
-  filtered = filtered.filter(t => t.ts && t.ts.startsWith(yday));
-}
-if (flags.week) {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - mondayOffset);
-  const ws = weekStart.toISOString().split('T')[0];
-  filtered = filtered.filter(t => t.ts && t.ts >= ws);
+let result;
+try {
+  result = queryFromDB();
+} catch (_e) {
+  result = queryFromFlatFiles();
 }
 
-// Type filter
-if (flags.type) {
-  filtered = filtered.filter(t => t.type === flags.type);
+console.log(JSON.stringify(result, null, 2));
+
+// --- DB path (preferred) ---
+function queryFromDB() {
+  const db = getDB();
+  const filters = {};
+
+  const today = todayISO();
+  if (flags.today) {
+    filters.from_date = today;
+    filters.to_date = today;
+  }
+  if (flags.yesterday) {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    const yday = d.toISOString().split('T')[0];
+    filters.from_date = yday;
+    filters.to_date = yday;
+  }
+  if (flags.week) {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - mondayOffset);
+    filters.from_date = weekStart.toISOString().split('T')[0];
+    filters.to_date = today;
+  }
+  if (flags.month) {
+    const m = currentMonth();
+    filters.from_date = `${m}-01`;
+    filters.to_date = `${m}-31`;
+  }
+  if (flags.type) filters.type = flags.type;
+  if (flags.name) filters.counterparty_name = flags.name;
+  if (flags.min) filters.min_amount = parseFloat(flags.min);
+
+  const txns = db.getTransactions(filters);
+  const total = txns.reduce((s, t) => s + t.amount, 0);
+  return { count: txns.length, total, transactions: txns };
 }
 
-// Name filter
-if (flags.name) {
-  const name = flags.name.toUpperCase();
-  filtered = filtered.filter(t =>
-    t.counterparty && t.counterparty.toUpperCase().includes(name)
-  );
-}
+// --- Flat file fallback ---
+function queryFromFlatFiles() {
+  const txns = readJSONL(PATHS.ledger(currentMonth()));
+  let filtered = txns;
 
-// Amount filter
-if (flags.min) {
-  filtered = filtered.filter(t => t.amount >= parseFloat(flags.min));
-}
+  const today = todayISO();
+  if (flags.today) {
+    filtered = filtered.filter(t => t.ts && t.ts.startsWith(today));
+  }
+  if (flags.yesterday) {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    const yday = d.toISOString().split('T')[0];
+    filtered = filtered.filter(t => t.ts && t.ts.startsWith(yday));
+  }
+  if (flags.week) {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - mondayOffset);
+    const ws = weekStart.toISOString().split('T')[0];
+    filtered = filtered.filter(t => t.ts && t.ts >= ws);
+  }
+  if (flags.type) {
+    filtered = filtered.filter(t => t.type === flags.type);
+  }
+  if (flags.name) {
+    const name = flags.name.toUpperCase();
+    filtered = filtered.filter(t =>
+      t.counterparty && t.counterparty.toUpperCase().includes(name)
+    );
+  }
+  if (flags.min) {
+    filtered = filtered.filter(t => t.amount >= parseFloat(flags.min));
+  }
 
-// Output
-const total = filtered.reduce((s, t) => s + t.amount, 0);
-console.log(JSON.stringify({
-  count: filtered.length,
-  total,
-  transactions: filtered
-}, null, 2));
+  const total = filtered.reduce((s, t) => s + t.amount, 0);
+  return { count: filtered.length, total, transactions: filtered };
+}

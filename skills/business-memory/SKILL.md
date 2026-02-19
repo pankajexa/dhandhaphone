@@ -21,6 +21,36 @@ conversation. Updates workspace files automatically. Provides instant
 lookup when asked.
 
 ## Data Locations
+
+### Preferred: SQLite Database
+Use DB functions from `workspace/lib/utils.js`:
+```javascript
+const { getDB } = require('workspace/lib/utils');
+const db = getDB();
+
+// Contact operations
+db.findContact('sharma');           // search by name/phone
+db.getContact(1);                   // get by ID
+db.addContact({ name, phone, type, balance });
+db.updateContactBalance(id, delta);
+
+// Inventory operations
+db.findInventoryItem('cement');     // search by name
+db.getLowStockItems();              // below reorder point
+db.addInventoryItem({ name, unit, quantity, min_quantity, purchase_price, selling_price });
+db.updateInventoryQuantity(id, delta);
+
+// Pending actions
+db.getPendingActions();
+db.addPendingAction({ type, target_contact_id, description, due_date });
+db.updateActionStatus(id, 'done');
+
+// Receivables & Payables
+db.getReceivables();                // who owes us
+db.getPayables();                   // who we owe
+```
+
+### Flat file fallback
 - Contacts: `workspace/contacts/contacts.json`
 - Inventory: `workspace/inventory/stock.json`
 - Pending Actions: `workspace/pending/actions.json`

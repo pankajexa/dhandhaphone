@@ -100,6 +100,18 @@ Log as debit? ✅ / ❌
 ```
 
 ### Step 5: After confirmation, YOU handle business logic
+
+**Preferred: Use SQLite DB** via `getDB()` from `workspace/lib/utils.js`:
+- **Invoice** → `db.addTransaction({ type: 'debit', source: 'ocr', ... })`, `db.addDocument(...)`, update supplier contact
+- **Receipt** → `db.addTransaction({ type: 'credit', source: 'ocr', ... })`, `db.addDocument(...)`, update customer contact
+- **Business card** → `db.addContact({ name, phone, company, type })`
+- **Price list** → `db.addPriceEntry({ item_name, price, unit, source: 'price_list' })`
+- **Bank statement** → batch import via `db.addTransaction()` with shared `batch_id`, use `db.isDuplicate()` to skip SMS-captured entries
+- **Stock register** → `db.addInventoryItem()` or `db.updateInventoryQuantity()`
+
+Also log the document: `db.addDocument({ type, file_path, raw_text, structured_data, language, confidence })`
+
+**Flat file fallback** (also written for dual-write):
 - **Invoice** → log debit in ledger (source: "ocr"), update supplier contact
 - **Receipt** → log credit in ledger (source: "ocr"), update customer contact
 - **Business card** → create/update contact in contacts.json

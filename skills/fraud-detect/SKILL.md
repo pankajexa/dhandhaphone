@@ -20,7 +20,36 @@ Flags suspicious activity, alerts the owner, and maintains a fraud log.
 Designed for Indian SMB transaction patterns — catches duplicate UPI
 charges, fake SMS scams, unusual amounts, and timing anomalies.
 
+All fraud detection thresholds are configurable via `workspace/lib/config.js`.
+The owner can adjust these via Telegram conversation (see SOUL.md).
+
 ## Data Locations
+
+### Preferred: SQLite Database
+Use DB functions from `workspace/lib/utils.js`:
+```javascript
+const { getDB } = require('workspace/lib/utils');
+const db = getDB();
+
+// Fraud alerts
+db.addFraudAlert({ alert_type, severity, description, transaction_id, data });
+db.getPendingAlerts();                   // all unresolved
+db.getPendingAlerts('red');              // by severity
+db.resolveAlert(id);
+
+// Baselines
+db.getBaseline('avg_daily_revenue');
+db.setBaseline('avg_daily_revenue', { amount: 15000, count: 10 });
+
+// Dedup checking
+db.isDuplicate(amount, date, reference);
+db.markProcessed(amount, date, reference, source, txnId);
+
+// Ad-hoc: recent transactions for velocity checks
+db.getTransactions({ from_date: today, limit: 20 });
+```
+
+### Flat file fallback
 - Transaction ledger: `workspace/ledger/YYYY-MM.jsonl`
 - Fraud alerts log: `workspace/accounting/fraud-alerts.jsonl`
 - Baseline stats: `workspace/accounting/txn-baseline.json`
@@ -32,20 +61,20 @@ Run on EVERY new transaction as it's logged.
 
 | Check | Rule | Action |
 |-------|------|--------|
-| Duplicate amount | Same amount + same counterparty within 5 minutes | 🔴 Alert: likely duplicate charge |
-| Rapid fire | >5 debits within 10 minutes | 🔴 Alert: possible unauthorized access |
-| Same-amount burst | Same exact amount debited 3+ times in 1 hour | 🟡 Flag: review needed |
-| Night transactions | Debit between 12 AM - 5 AM IST | 🟡 Flag: unusual timing |
-| Weekend large debit | Debit >₹10,000 on Sunday | 🟡 Flag: review if expected |
+| Duplicate amount | Same amount + same counterparty within `config.get('fraud_duplicate_window_min')` (default 5) minutes | 🔴 Alert: likely duplicate charge |
+| Rapid fire | more than `config.get('fraud_rapid_fire_count')` (default 5) debits within `config.get('fraud_rapid_fire_window_min')` (default 10) minutes | 🔴 Alert: possible unauthorized access |
+| Same-amount burst | Same exact amount debited `config.get('fraud_same_amount_burst')` (default 3)+ times in `config.get('fraud_same_amount_window_hr')` (default 1) hour | 🟡 Flag: review needed |
+| Night transactions | Debit between `config.get('fraud_night_start_hour')` (default 0) to `config.get('fraud_night_end_hour')` (default 5) IST | 🟡 Flag: unusual timing |
+| Weekend large debit | Debit more than `config.get('fraud_weekend_large_debit')` (default ₹10,000) on Sunday | 🟡 Flag: review if expected |
 
 ### Layer 2: Amount Anomalies (Per-transaction)
 Compare each transaction against the owner's baseline.
 
 | Check | Rule | Action |
 |-------|------|--------|
-| Unusually large | Amount > 3× average transaction for same type | 🟡 Flag: verify |
-| Round number large debit | Exact round number >₹50,000 debit | 🟡 Flag: verify intent |
-| New counterparty + large | First-time counterparty + amount >₹10,000 | 🟡 Flag: new party, large amount |
+| Unusually large | Amount > `config.get('fraud_amount_anomaly_multiplier')` (default 3)× average transaction for same type | 🟡 Flag: verify |
+| Round number large debit | Exact round number more than `config.get('fraud_round_number_threshold')` (default ₹50,000) debit | 🟡 Flag: verify intent |
+| New counterparty + large | First-time counterparty + amount more than `config.get('fraud_new_party_threshold')` (default ₹10,000) | 🟡 Flag: new party, large amount |
 | Amount mismatch | Credit ≠ expected amount from pending action | 🟡 Flag: partial or wrong payment |
 
 ### Layer 3: Pattern Breaks (Daily analysis)
@@ -53,8 +82,8 @@ Run during heartbeat or EOD to catch longer-term anomalies.
 
 | Check | Rule | Action |
 |-------|------|--------|
-| Revenue drop | Today's credits < 50% of 7-day average | 🟡 Note in EOD briefing |
-| Expense spike | Today's debits > 2× 7-day average | 🟡 Note in EOD briefing |
+| Revenue drop | Today's credits less than `config.get('fraud_revenue_drop_pct')` (default 50)% of 7-day average | 🟡 Note in EOD briefing |
+| Expense spike | Today's debits more than `config.get('fraud_expense_spike_multiplier')` (default 2)× 7-day average | 🟡 Note in EOD briefing |
 | Missing expected | Regular daily customer didn't transact | ℹ️ Mention if pattern broken for 3+ days |
 | New recurring debit | Same amount debited weekly (subscription?) | ℹ️ Ask owner if intentional |
 | Counterparty frequency | Sudden increase in txns with one party | 🟡 Flag: unusual activity |
@@ -75,7 +104,7 @@ Run during heartbeat or EOD to catch longer-term anomalies.
 }
 ```
 
-Recalculate baseline weekly from last 30 days of ledger data.
+Recalculate baseline every `config.get('fraud_baseline_recalc_days')` (default 7) days from last 30 days of ledger data.
 For new businesses (< 30 days data), use conservative defaults.
 
 ## Alert Levels

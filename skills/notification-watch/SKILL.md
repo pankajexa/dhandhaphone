@@ -118,8 +118,24 @@ content: "₹15,000 settled for 12 transactions"
 ```
 
 ## Deduplication
+
+### Preferred: SQLite Dedup
+```javascript
+const { getDB } = require('workspace/lib/utils');
+const db = getDB();
+
+// Check before logging
+if (db.isDuplicate(amount, date, reference)) {
+  // Skip — already captured via SMS
+} else {
+  const txnId = db.addTransaction({ type, amount, counterparty_name, method, source: 'notification', transaction_date });
+  db.markProcessed(amount, date, reference, 'notification', txnId);
+}
+```
+
+### Flat file fallback
 Notifications can duplicate with bank SMS. Before logging:
-1. Check if a transaction with same amount ± same counterparty exists
+1. Check if a transaction with same amount +/- same counterparty exists
    in the last 10 minutes of ledger entries
 2. If match found → skip (SMS already captured it)
 3. If no match → log as new transaction with source: "notification"
@@ -136,14 +152,40 @@ Then update summary:
 node workspace/skills/sms-ledger/scripts/rebuild-summary.js
 ```
 
+## Scripts
+- **Notification Poller**: `gateway/ingestion/notification-poller.js` — main polling loop,
+  runs every heartbeat cycle (2 min). Reads `termux-notification-list`, filters by
+  monitored packages, parses via the registry, deduplicates, and writes to the ledger.
+- **Parser Registry**: `gateway/ingestion/notification-parser.js` — contains per-app
+  parsers for all 13 monitored apps. Each parser extracts amount, counterparty, type,
+  method, and reference from the notification title + content.
+
+## Monitored Apps (13)
+
+| # | Package | App | Category |
+|---|---------|-----|----------|
+| 1 | `com.google.android.apps.nbu.paisa` | Google Pay | UPI |
+| 2 | `com.phonepe.app` | PhonePe | UPI |
+| 3 | `net.one97.paytm` | Paytm | UPI |
+| 4 | `in.org.npci.upiapp` | BHIM | UPI |
+| 5 | `com.pinelabs.masterapp` | Pine Labs | POS |
+| 6 | `com.razorpay.*` | Razorpay | Payment Gateway |
+| 7 | `com.petpooja.*` | Petpooja | POS / Restaurant |
+| 8 | `com.instamojo.*` | Instamojo | Payment Gateway |
+| 9 | `in.swiggy.android` | Swiggy | Food Delivery |
+| 10 | `com.application.zomato` | Zomato | Food Delivery |
+| 11 | `in.amazon.mShop.android.shopping` | Amazon Seller | E-commerce |
+| 12 | `com.flipkart.android` | Flipkart Seller | E-commerce |
+| 13 | Banking apps (various) | SBI/HDFC/ICICI/etc. | Banking |
+
 ## Heartbeat Integration
-The notification poller runs every 5 minutes alongside the SMS poller.
-During heartbeat, any high-value notification (>₹5,000) triggers an
+The notification poller runs every 2 minutes (every heartbeat cycle) alongside the SMS poller.
+During heartbeat, any high-value notification (above `config.get('alert_large_transaction')`, default ₹5,000) triggers an
 immediate alert to the owner via Telegram.
 
 ## Alerts
 Notify the owner immediately for:
-- Large payments received (>₹5,000)
+- Large payments received (above `config.get('alert_large_transaction')`, default ₹5,000)
 - POS settlement completed
 - Food delivery platform payouts
 - Failed payment notifications

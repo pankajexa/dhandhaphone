@@ -3,17 +3,68 @@ DhandhaPhone Cloud LLM Router
 Primary: Anthropic Claude for agentic actions.
 Optional fallback: Gemini Flash (cheap), DeepSeek V3 (medium).
 Reads API keys from ../.env or environment variables.
+
+Network restriction: Only contacts LLM API endpoints. No other outbound allowed.
 """
 from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from pathlib import Path
+from urllib.parse import urlparse
 import httpx
 import os
 import time
+import sqlite3
+
+
+# ═══════════════════════════════════════════════════════════════════
+# NETWORK GUARD — only allow LLM API endpoints
+# ═══════════════════════════════════════════════════════════════════
+
+ALLOWED_HOSTS = {
+    "api.anthropic.com",
+    "generativelanguage.googleapis.com",
+    "api.deepseek.com",
+}
+
+
+class GuardedTransport(httpx.AsyncHTTPTransport):
+    """httpx transport that blocks requests to non-allowed hosts."""
+
+    async def handle_async_request(self, request):
+        host = request.url.host.lower()
+        if host not in ALLOWED_HOSTS:
+            raise httpx.ConnectError(
+                f"[NetworkGuard] Blocked: {host} not in allowed list: "
+                f"{', '.join(sorted(ALLOWED_HOSTS))}"
+            )
+        return await super().handle_async_request(request)
 
 # Load .env from project root (one level up from server/)
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+
+# --- Read config from owner_profile SQLite table ---
+def get_config(key: str, default=None):
+    """Read a config value from the DhandhaPhone SQLite database."""
+    db_path = os.getenv("DHANDHA_DB") or str(
+        Path(__file__).resolve().parent.parent / "dhandhaphone.db"
+    )
+    try:
+        conn = sqlite3.connect(db_path)
+        row = conn.execute(
+            "SELECT value FROM owner_profile WHERE key = ?", (key,)
+        ).fetchone()
+        conn.close()
+        if row is None:
+            return default
+        import json
+        try:
+            return json.loads(row[0])
+        except (json.JSONDecodeError, TypeError):
+            return row[0]
+    except Exception:
+        return default
 
 app = FastAPI(title="DhandhaPhone LLM Router")
 
@@ -64,7 +115,7 @@ async def call_claude(messages: list[dict], max_tokens: int) -> tuple[str, float
     if not ANTHROPIC_KEY:
         raise ValueError("ANTHROPIC_API_KEY not configured")
 
-    async with httpx.AsyncClient(timeout=90) as client:
+    async with httpx.AsyncClient(timeout=90, transport=GuardedTransport()) as client:
         resp = await client.post(
             "https://api.anthropic.com/v1/messages",
             headers={
@@ -73,7 +124,7 @@ async def call_claude(messages: list[dict], max_tokens: int) -> tuple[str, float
                 "content-type": "application/json",
             },
             json={
-                "model": "claude-sonnet-4-20250514",
+                "model": get_config("llm_model_primary", "claude-sonnet-4-20250514"),
                 "max_tokens": max_tokens,
                 "messages": messages,
             },
@@ -82,7 +133,10 @@ async def call_claude(messages: list[dict], max_tokens: int) -> tuple[str, float
         text = data["content"][0]["text"]
         input_tokens = data.get("usage", {}).get("input_tokens", 0)
         output_tokens = data.get("usage", {}).get("output_tokens", 0)
-        cost = (input_tokens * 0.003 + output_tokens * 0.015) / 1000 * 85
+        cost_input = get_config("llm_cost_input_per_1k", 0.003)
+        cost_output = get_config("llm_cost_output_per_1k", 0.015)
+        inr_rate = get_config("inr_exchange_rate", 85)
+        cost = (input_tokens * cost_input + output_tokens * cost_output) / 1000 * inr_rate
         return text, cost
 
 
@@ -91,7 +145,7 @@ async def call_gemini(messages: list[dict], max_tokens: int) -> tuple[str, float
     if not GEMINI_KEY:
         raise ValueError("GEMINI_API_KEY not configured")
 
-    async with httpx.AsyncClient(timeout=30) as client:
+    async with httpx.AsyncClient(timeout=30, transport=GuardedTransport()) as client:
         resp = await client.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_KEY}",
             json={
@@ -118,7 +172,7 @@ async def call_deepseek(messages: list[dict], max_tokens: int) -> tuple[str, flo
     if not DEEPSEEK_KEY:
         raise ValueError("DEEPSEEK_API_KEY not configured")
 
-    async with httpx.AsyncClient(timeout=60) as client:
+    async with httpx.AsyncClient(timeout=60, transport=GuardedTransport()) as client:
         resp = await client.post(
             "https://api.deepseek.com/v1/chat/completions",
             headers={"Authorization": f"Bearer {DEEPSEEK_KEY}"},

@@ -20,6 +20,23 @@ when prices change significantly. Builds a price intelligence database
 from conversations, invoices, and transactions.
 
 ## Data Locations
+
+### Preferred: SQLite Database
+Use DB functions from `workspace/lib/utils.js`:
+```javascript
+const { getDB } = require('workspace/lib/utils');
+const db = getDB();
+
+db.getLatestPrice('Basmati Rice 25kg');  // most recent price
+db.getPriceHistory('Basmati Rice 25kg', 10); // last 10 entries
+db.addPriceEntry({ item_name, price, unit, source, supplier_id });
+db.findInventoryItem('cement');          // inventory with purchase/selling prices
+
+// Supplier comparison query
+db.agentQuery('SELECT item_name, supplier_id, price, recorded_at FROM price_history WHERE item_name LIKE ? ORDER BY price ASC', ['%cement%']);
+```
+
+### Flat file fallback
 - Price history: `workspace/inventory/price-history.jsonl`
 - Margin tracker: `workspace/inventory/margins.json`
 - Supplier price comparison: derived from price-history on query
@@ -107,8 +124,8 @@ Log with source: "transaction".
 ## Price Change Alerts
 During heartbeat or when new price is logged:
 1. Compare new price vs last price for same item + supplier
-2. If change > 5%: alert in next briefing
-3. If change > 10%: alert immediately
+2. If change exceeds `config.get('price_change_alert_pct')` (default 5%): alert in next briefing
+3. If change exceeds `config.get('price_change_immediate_pct')` (default 10%): alert immediately
 
 ```
 📈 Price Alert!
@@ -129,7 +146,7 @@ You can negotiate to ₹375 — reference: Jan batch."
 
 ## Margin Alerts
 During briefing, flag if margins drop below threshold:
-- Default threshold: 10% margin
+- Default threshold: `config.get('margin_alert_min_pct')` (default 10%) margin
 - "⚠️ Cement margin down to 8% — cost is now ₹420, selling at ₹450.
   Increase price or switch supplier?"
 
