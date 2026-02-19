@@ -16,16 +16,23 @@ mkdir -p "$WORKSPACE"/{skills/{sms-ledger/scripts,business-memory/scripts,busine
 
 # 2. Copy skill files
 echo "Installing skills..."
-cp "$REPO_DIR/skills/sms-ledger/SKILL.md" "$WORKSPACE/skills/sms-ledger/"
-cp "$REPO_DIR/skills/sms-ledger/scripts/"*.js "$WORKSPACE/skills/sms-ledger/scripts/"
-cp "$REPO_DIR/skills/business-memory/SKILL.md" "$WORKSPACE/skills/business-memory/"
-cp "$REPO_DIR/skills/business-memory/scripts/"*.js "$WORKSPACE/skills/business-memory/scripts/"
-cp "$REPO_DIR/skills/business-briefing/SKILL.md" "$WORKSPACE/skills/business-briefing/"
-cp "$REPO_DIR/skills/document-intel/SKILL.md" "$WORKSPACE/skills/document-intel/"
-cp "$REPO_DIR/skills/document-intel/scripts/"*.sh "$WORKSPACE/skills/document-intel/scripts/"
-for skill in notification-watch accounting gst-assistant fraud-detect credit-manager price-memory; do
+# Copy SKILL.md for all skills
+for skill in sms-ledger business-memory business-briefing document-intel notification-watch accounting gst-assistant fraud-detect credit-manager price-memory; do
   cp "$REPO_DIR/skills/$skill/SKILL.md" "$WORKSPACE/skills/$skill/"
 done
+
+# Copy skill-specific scripts (skip symlinks to lib/ — those are created in step 4)
+for f in "$REPO_DIR/skills/sms-ledger/scripts/"*.js; do
+  [ -L "$f" ] && continue  # skip symlinks
+  [ -f "$f" ] || continue  # skip if glob matched nothing
+  cp "$f" "$WORKSPACE/skills/sms-ledger/scripts/"
+done
+for f in "$REPO_DIR/skills/business-memory/scripts/"*.js; do
+  [ -L "$f" ] && continue
+  [ -f "$f" ] || continue
+  cp "$f" "$WORKSPACE/skills/business-memory/scripts/"
+done
+cp "$REPO_DIR/skills/document-intel/scripts/"*.sh "$WORKSPACE/skills/document-intel/scripts/" 2>/dev/null || true
 
 # 3. Copy shared library
 echo "Installing shared libraries..."
@@ -43,16 +50,7 @@ cp -r "$REPO_DIR/knowledge/" "$WORKSPACE/knowledge/"
 echo "Installing gateway ingestion modules..."
 cp "$REPO_DIR/gateway/ingestion/"*.js "$WORKSPACE/gateway/ingestion/"
 
-# 4. Create symlinks from skills to shared lib
-echo "Linking shared scripts..."
-cd "$WORKSPACE/skills"
-for skill in sms-ledger business-memory business-briefing document-intel; do
-  ln -sf ../../lib/termux-api.js "$skill/scripts/termux-api.js" 2>/dev/null || true
-  ln -sf ../../lib/termux-bridge.sh "$skill/scripts/termux-bridge.sh" 2>/dev/null || true
-  ln -sf ../../lib/utils.js "$skill/scripts/utils.js" 2>/dev/null || true
-done
-
-# 5. Copy config files
+# 4. Copy config files
 echo "Installing agent configuration..."
 cp "$REPO_DIR/config/AGENTS.md" "$WORKSPACE/"
 cp "$REPO_DIR/config/SOUL.md" "$WORKSPACE/"
