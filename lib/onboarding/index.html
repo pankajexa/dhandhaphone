@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DhandhaPhone Setup</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#2563eb;--primary-dark:#1d4ed8;--bg:#f8fafc;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--success:#16a34a;--error:#dc2626;--radius:12px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:16px}
+.app{width:100%;max-width:420px;margin:0 auto}
+.header{text-align:center;padding:24px 0 16px}
+.header h1{font-size:24px;font-weight:700;color:var(--primary)}
+.header .subtitle{font-size:14px;color:var(--muted);margin-top:4px}
+.steps{display:flex;justify-content:center;gap:8px;padding:12px 0 24px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--border);transition:all .3s}
+.dot.active{background:var(--primary);transform:scale(1.2)}
+.dot.done{background:var(--success)}
+.card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:16px;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card h2{font-size:18px;margin-bottom:4px}
+.card .desc{font-size:14px;color:var(--muted);margin-bottom:20px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;outline:none;transition:border .2s;background:#fff}
+.field input:focus,.field select:focus{border-color:var(--primary)}
+.field .hint{font-size:12px;color:var(--muted);margin-top:4px}
+.field .error-msg{font-size:12px;color:var(--error);margin-top:4px;display:none}
+.field.invalid input,.field.invalid select{border-color:var(--error)}
+.field.invalid .error-msg{display:block}
+.row{display:flex;gap:12px}
+.row .field{flex:1}
+.toggle{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.toggle input[type=checkbox]{width:20px;height:20px;accent-color:var(--primary)}
+.toggle label{font-size:14px;cursor:pointer}
+.lang-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.lang-btn{padding:10px 8px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:13px;text-align:center;cursor:pointer;transition:all .2s}
+.lang-btn:hover{border-color:var(--primary);background:#eff6ff}
+.lang-btn.selected{border-color:var(--primary);background:#dbeafe;font-weight:600}
+.key-row{display:flex;align-items:center;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+.key-row .dot-status{width:10px;height:10px;border-radius:50%;margin-right:10px;flex-shrink:0}
+.key-row .dot-status.ok{background:var(--success)}
+.key-row .dot-status.missing{background:var(--error)}
+.key-row .key-info{flex:1}
+.key-row .key-name{font-size:14px;font-weight:600}
+.key-row .key-desc{font-size:12px;color:var(--muted)}
+.key-row a{font-size:12px;color:var(--primary);text-decoration:none;white-space:nowrap}
+.summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
+.summary-row:last-child{border-bottom:none}
+.summary-row .label{color:var(--muted)}
+.summary-row .value{font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-primary:disabled{background:var(--border);cursor:not-allowed}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.nav{display:flex;gap:12px;margin-top:20px}
+.nav .btn{flex:1}
+.done-icon{font-size:48px;text-align:center;margin-bottom:12px}
+.step{display:none}
+.step.visible{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>DhandhaPhone</h1>
+    <div class="subtitle">AI Business Assistant Setup</div>
+  </div>
+  <div class="steps" id="stepDots"></div>
+
+  <!-- Step 1: Welcome -->
+  <div class="step" id="step-0">
+    <div class="card">
+      <h2>Welcome! Choose your language</h2>
+      <div class="desc">Select the language you're most comfortable with. You can change this anytime.</div>
+      <div class="lang-grid" id="langGrid"></div>
+      <div class="nav"><button class="btn btn-primary" onclick="goTo(1)">Let's get started</button></div>
+    </div>
+  </div>
+
+  <!-- Step 2: Owner Info -->
+  <div class="step" id="step-1">
+    <div class="card">
+      <h2>About You</h2>
+      <div class="desc">Tell us a bit about yourself.</div>
+      <div class="field" id="f-owner_name">
+        <label>Your Name *</label>
+        <input type="text" data-key="owner_name" placeholder="e.g. Ramesh Kumar">
+        <div class="error-msg">Name is required</div>
+      </div>
+      <div class="field" id="f-owner_phone">
+        <label>Phone Number *</label>
+        <input type="tel" data-key="owner_phone" placeholder="e.g. 9876543210" maxlength="10" inputmode="numeric">
+        <div class="error-msg">Enter a valid 10-digit Indian mobile number</div>
+      </div>
+      <div class="field">
+        <label>Preferred Language</label>
+        <select data-key="owner_language" id="langSelect"></select>
+      </div>
+      <div class="nav">
+        <button class="btn btn-outline" onclick="goTo(0)">Back</button>
+        <button class="btn btn-primary" onclick="validateAndGo(2, ['owner_name','owner_phone'])">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Business Info -->
+  <div class="step" id="step-2">
+    <div class="card">
+      <h2>Your Business</h2>
+      <div class="desc">Help us understand your business so we can assist better.</div>
+      <div class="field" id="f-business_name">
+        <label>Business Name *</label>
+        <input type="text" data-key="business_name" placeholder="e.g. Krishna Hardware">
+        <div class="error-msg">Business name is required</div>
+      </div>
+      <div class="field">
+        <label>Business Type</label>
+        <select data-key="business_type">
+          <option value="">Select type...</option>
+          <option value="kirana">Kirana / Grocery</option>
+          <option value="hardware">Hardware Store</option>
+          <option value="restaurant">Restaurant / Food</option>
+          <option value="salon">Salon / Beauty</option>
+          <option value="textile">Textile / Garments</option>
+          <option value="electronics">Electronics</option>
+          <option value="medical">Medical / Pharmacy</option>
+          <option value="general">General Trade</option>
+          <option value="service">Service Business</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>City</label>
+          <input type="text" data-key="business_location" placeholder="e.g. Hyderabad">
+        </div>
+        <div class="field">
+          <label>State</label>
+          <select data-key="business_state" id="stateSelect">
+            <option value="">Select...</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>GSTIN (optional)</label>
+        <input type="text" data-key="gstin" placeholder="e.g. 36ABCDE1234F1Z5" maxlength="15" style="text-transform:uppercase">
+        <div class="hint">15-character GST number. Leave blank if not registered.</div>
+        <div class="error-msg">Invalid GSTIN format</div>
+      </div>
+      <div class="field">
+        <label>GST Scheme</label>
+        <select data-key="gst_scheme">
+          <option value="regular">Regular (monthly filing, ITC eligible)</option>
+          <option value="composition">Composition (quarterly, flat rate)</option>
+        </select>
+      </div>
+      <div class="nav">
+        <button class="btn btn-outline" onclick="goTo(1)">Back</button>
+        <button class="btn btn-primary" onclick="validateAndGo(3, ['business_name'])">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Schedule & Alerts -->
+  <div class="step" id="step-3">
+    <div class="card">
+      <h2>Schedule & Alerts</h2>
+      <div class="desc">Customize when you get updates and what triggers alerts.</div>
+      <div class="row">
+        <div class="field">
+          <label>Morning Briefing</label>
+          <input type="time" data-key="briefing_morning_time" value="07:00">
+        </div>
+        <div class="field">
+          <label>Evening Briefing</label>
+          <input type="time" data-key="briefing_evening_time" value="20:00">
+        </div>
+      </div>
+      <div class="field">
+        <label>EOD Summary</label>
+        <input type="time" data-key="eod_summary_time" value="21:00">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Large Transaction Alert</label>
+          <input type="number" data-key="alert_large_transaction" value="5000" min="100" step="500" inputmode="numeric">
+          <div class="hint">Alert when a single transaction exceeds this amount</div>
+        </div>
+        <div class="field">
+          <label>Overdue Days</label>
+          <input type="number" data-key="alert_overdue_days" value="7" min="1" max="90" inputmode="numeric">
+          <div class="hint">Alert for receivables older than this</div>
+        </div>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="voiceToggle" data-key="voice_briefing_enabled" checked>
+        <label for="voiceToggle">Enable voice briefings (via Telegram voice notes)</label>
+      </div>
+      <div class="nav">
+        <button class="btn btn-outline" onclick="goTo(2)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(4)">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5: API Keys -->
+  <div class="step" id="step-4">
+    <div class="card">
+      <h2>API Keys Status</h2>
+      <div class="desc">These keys are set in the .env file on your phone. We just check if they're configured.</div>
+      <div id="keysContainer"></div>
+      <div class="hint" style="margin-top:12px">To add or change keys, edit the .env file in your DhandhaPhone directory.</div>
+      <div class="nav">
+        <button class="btn btn-outline" onclick="goTo(3)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(5)">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 6: Done -->
+  <div class="step" id="step-5">
+    <div class="card">
+      <div class="done-icon">&#x1F389;</div>
+      <h2 style="text-align:center">Your DhandhaPhone is ready!</h2>
+      <div class="desc" style="text-align:center">Here's a summary of your configuration.</div>
+      <div id="summaryContainer" style="margin-bottom:20px"></div>
+      <button class="btn btn-primary" id="finishBtn" onclick="finishSetup()">Save & Finish</button>
+      <div class="nav" style="margin-top:8px">
+        <button class="btn btn-outline" onclick="goTo(3)">Back to edit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LANGUAGES = [
+  { code: 'en', label: 'English', native: 'English' },
+  { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
+  { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
+  { code: 'te', label: 'Telugu', native: 'తెలుగు' },
+  { code: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ' },
+  { code: 'ml', label: 'Malayalam', native: 'മലയാളം' },
+  { code: 'bn', label: 'Bengali', native: 'বাংলা' },
+  { code: 'mr', label: 'Marathi', native: 'मराठी' },
+  { code: 'gu', label: 'Gujarati', native: 'ગુજરાતી' },
+  { code: 'pa', label: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
+  { code: 'or', label: 'Odia', native: 'ଓଡ଼ିଆ' },
+];
+
+const STATES = [
+  { name:'Andhra Pradesh', code:'37' },{ name:'Arunachal Pradesh', code:'12' },
+  { name:'Assam', code:'18' },{ name:'Bihar', code:'10' },
+  { name:'Chhattisgarh', code:'22' },{ name:'Goa', code:'30' },
+  { name:'Gujarat', code:'24' },{ name:'Haryana', code:'06' },
+  { name:'Himachal Pradesh', code:'02' },{ name:'Jharkhand', code:'20' },
+  { name:'Karnataka', code:'29' },{ name:'Kerala', code:'32' },
+  { name:'Madhya Pradesh', code:'23' },{ name:'Maharashtra', code:'27' },
+  { name:'Manipur', code:'14' },{ name:'Meghalaya', code:'17' },
+  { name:'Mizoram', code:'15' },{ name:'Nagaland', code:'13' },
+  { name:'Odisha', code:'21' },{ name:'Punjab', code:'03' },
+  { name:'Rajasthan', code:'08' },{ name:'Sikkim', code:'11' },
+  { name:'Tamil Nadu', code:'33' },{ name:'Telangana', code:'36' },
+  { name:'Tripura', code:'16' },{ name:'Uttar Pradesh', code:'09' },
+  { name:'Uttarakhand', code:'05' },{ name:'West Bengal', code:'19' },
+  { name:'Andaman & Nicobar', code:'35' },{ name:'Chandigarh', code:'04' },
+  { name:'Dadra & Nagar Haveli and Daman & Diu', code:'26' },
+  { name:'Delhi', code:'07' },{ name:'Jammu & Kashmir', code:'01' },
+  { name:'Ladakh', code:'38' },{ name:'Lakshadweep', code:'31' },
+  { name:'Puducherry', code:'34' },
+];
+
+let currentStep = 0;
+const TOTAL_STEPS = 6;
+let selectedLang = 'en';
+
+// --- Init ---
+function init() {
+  renderDots();
+  renderLangGrid();
+  renderLangSelect();
+  renderStates();
+  loadExistingConfig();
+  showStep(0);
+}
+
+function renderDots() {
+  const c = document.getElementById('stepDots');
+  c.innerHTML = '';
+  for (let i = 0; i < TOTAL_STEPS; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === currentStep ? ' active' : '') + (i < currentStep ? ' done' : '');
+    c.appendChild(d);
+  }
+}
+
+function renderLangGrid() {
+  const g = document.getElementById('langGrid');
+  g.innerHTML = '';
+  LANGUAGES.forEach(l => {
+    const b = document.createElement('div');
+    b.className = 'lang-btn' + (l.code === selectedLang ? ' selected' : '');
+    b.textContent = l.native;
+    b.onclick = () => {
+      selectedLang = l.code;
+      document.querySelectorAll('.lang-btn').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+      document.getElementById('langSelect').value = l.code;
+    };
+    g.appendChild(b);
+  });
+}
+
+function renderLangSelect() {
+  const s = document.getElementById('langSelect');
+  s.innerHTML = '';
+  LANGUAGES.forEach(l => {
+    const o = document.createElement('option');
+    o.value = l.code;
+    o.textContent = `${l.native} (${l.label})`;
+    if (l.code === selectedLang) o.selected = true;
+    s.appendChild(o);
+  });
+}
+
+function renderStates() {
+  const s = document.getElementById('stateSelect');
+  STATES.forEach(st => {
+    const o = document.createElement('option');
+    o.value = st.name;
+    o.dataset.gstCode = st.code;
+    o.textContent = st.name;
+    s.appendChild(o);
+  });
+}
+
+async function loadExistingConfig() {
+  try {
+    const res = await fetch('/api/config');
+    const data = await res.json();
+    if (data.config) {
+      Object.entries(data.config).forEach(([k, v]) => {
+        if (v === null || v === undefined) return;
+        const el = document.querySelector(`[data-key="${k}"]`);
+        if (!el) return;
+        if (el.type === 'checkbox') el.checked = !!v;
+        else el.value = v;
+      });
+      if (data.config.owner_language) {
+        selectedLang = data.config.owner_language;
+        renderLangGrid();
+        renderLangSelect();
+      }
+    }
+    if (data.onboarded) {
+      document.querySelector('.header .subtitle').textContent = 'Settings (already configured)';
+    }
+  } catch { /* ignore — first time */ }
+  loadKeysStatus();
+}
+
+async function loadKeysStatus() {
+  const c = document.getElementById('keysContainer');
+  c.innerHTML = '<div style="color:var(--muted);font-size:13px">Checking API keys...</div>';
+  try {
+    const res = await fetch('/api/keys-status');
+    const keys = await res.json();
+    c.innerHTML = '';
+    Object.entries(keys).forEach(([name, info]) => {
+      const row = document.createElement('div');
+      row.className = 'key-row';
+      row.innerHTML = `
+        <div class="dot-status ${info.set ? 'ok' : 'missing'}"></div>
+        <div class="key-info">
+          <div class="key-name">${name}${info.required ? '' : ' (optional)'}</div>
+          <div class="key-desc">${info.purpose}</div>
+        </div>
+        ${info.set ? '' : `<a href="${info.url}" target="_blank">Get key</a>`}
+      `;
+      c.appendChild(row);
+    });
+  } catch {
+    c.innerHTML = '<div style="color:var(--muted);font-size:13px">Could not check keys</div>';
+  }
+}
+
+// --- Navigation ---
+function showStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('visible'));
+  const el = document.getElementById(`step-${n}`);
+  if (el) el.classList.add('visible');
+  currentStep = n;
+  renderDots();
+  if (n === 4) loadKeysStatus();
+  if (n === 5) renderSummary();
+}
+
+function goTo(n) {
+  if (n >= 0 && n < TOTAL_STEPS) showStep(n);
+}
+
+function validateAndGo(nextStep, requiredFields) {
+  let valid = true;
+  requiredFields.forEach(key => {
+    const el = document.querySelector(`[data-key="${key}"]`);
+    const field = document.getElementById(`f-${key}`);
+    if (!el || !field) return;
+    const v = el.value.trim();
+    let ok = !!v;
+    if (key === 'owner_phone') ok = /^[6-9]\d{9}$/.test(v);
+    if (key === 'gstin' && v) ok = /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}\d{1}[A-Z]{1}\d{1}$/.test(v.toUpperCase());
+    if (!ok) { field.classList.add('invalid'); valid = false; }
+    else field.classList.remove('invalid');
+  });
+  if (valid) goTo(nextStep);
+}
+
+function renderSummary() {
+  const c = document.getElementById('summaryContainer');
+  const vals = collectValues();
+  const display = [
+    ['Name', vals.owner_name],
+    ['Phone', vals.owner_phone],
+    ['Language', (LANGUAGES.find(l => l.code === vals.owner_language) || {}).label || vals.owner_language],
+    ['Business', vals.business_name],
+    ['Type', vals.business_type],
+    ['Location', [vals.business_location, vals.business_state].filter(Boolean).join(', ')],
+    ['GSTIN', vals.gstin || 'Not set'],
+    ['Morning Briefing', vals.briefing_morning_time],
+    ['Evening Briefing', vals.briefing_evening_time],
+    ['Large Txn Alert', '\u20B9' + (vals.alert_large_transaction || 5000)],
+    ['Voice Briefings', vals.voice_briefing_enabled ? 'Enabled' : 'Disabled'],
+  ];
+  c.innerHTML = display
+    .filter(([, v]) => v)
+    .map(([l, v]) => `<div class="summary-row"><span class="label">${l}</span><span class="value">${v}</span></div>`)
+    .join('');
+}
+
+function collectValues() {
+  const vals = { owner_language: selectedLang };
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const key = el.dataset.key;
+    if (el.type === 'checkbox') vals[key] = el.checked;
+    else if (el.type === 'number') vals[key] = el.value ? Number(el.value) : null;
+    else vals[key] = el.value || null;
+  });
+  // Auto-set gst_state_code from state selection
+  const stateEl = document.getElementById('stateSelect');
+  const opt = stateEl.options[stateEl.selectedIndex];
+  if (opt && opt.dataset.gstCode) {
+    vals.gst_state_code = opt.dataset.gstCode;
+  }
+  // Uppercase GSTIN
+  if (vals.gstin) vals.gstin = vals.gstin.toUpperCase();
+  return vals;
+}
+
+async function finishSetup() {
+  const btn = document.getElementById('finishBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  try {
+    const vals = collectValues();
+    // Remove null values
+    const clean = {};
+    Object.entries(vals).forEach(([k, v]) => { if (v !== null && v !== '') clean[k] = v; });
+    await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(clean) });
+    await fetch('/api/onboarding/complete', { method: 'POST' });
+    btn.textContent = 'Done!';
+    btn.style.background = 'var(--success)';
+    setTimeout(() => {
+      document.querySelector('.card:last-child h2').textContent = 'Setup Complete!';
+      document.querySelector('.card:last-child .desc').textContent = 'You can close this page and start using DhandhaPhone via Telegram.';
+    }, 500);
+  } catch (e) {
+    btn.textContent = 'Error — try again';
+    btn.disabled = false;
+    btn.style.background = 'var(--error)';
+    setTimeout(() => { btn.style.background = ''; btn.textContent = 'Save & Finish'; }, 2000);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
