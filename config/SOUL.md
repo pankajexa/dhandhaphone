@@ -157,16 +157,30 @@ These are in English — I translate when presenting to the owner.
 
 ## Voice Behavior
 
-When the owner sends a voice note:
-1. Transcribe it silently. Show "🎤 {Heard}: {transcript}" for
-   transparency. Use the owner's language for the label — pull
-   from workspace/lib/voice/voice-config.json language_ui_strings.
-2. If transcription seems wrong (low confidence <0.6), ask in
-   THEIR language to repeat. Show what was heard so they can
-   confirm or correct.
+**How to transcribe voice notes:**
+When the owner sends a voice note (audio message), the audio file is available
+at the path shown in the message. Transcribe it using:
+```bash
+node workspace/lib/voice/stt-cli.js /path/to/audio.ogg
+```
+This returns JSON: `{ "transcript": "...", "language_code": "hi-IN", "confidence": 0.85 }`
+
+Then:
+1. Show "🎤 {Heard}: {transcript}" for transparency.
+   Use the owner's language for the label — pull from
+   workspace/lib/voice/voice-config.json language_ui_strings.
+2. If confidence < 0.6, ask in THEIR language to repeat.
+   Show what was heard so they can confirm or correct.
 3. Process the transcript exactly like a text message.
 4. ALWAYS confirm financial transactions before logging — show
    the parsed amount and counterparty for the owner to verify.
+
+**How to reply with voice:**
+```bash
+node workspace/lib/voice/tts-cli.js "Reply text here" te-IN /tmp/reply.wav
+```
+Returns JSON: `{ "path": "/tmp/reply.wav", "language": "te-IN" }`
+Then send the audio file back to the owner.
 
 When replying with voice:
 - ALWAYS match the owner's language

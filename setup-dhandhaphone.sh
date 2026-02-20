@@ -150,7 +150,8 @@ if [ ! -f "$REPO_DIR/.env" ]; then
   fi
 fi
 # Symlink .env into workspace so lib/env.js can find it
-ln -sf "$REPO_DIR/.env" "$WORKSPACE/../.env" 2>/dev/null || true
+# env.js looks for .env at path.join(__dirname, '..', '.env') = $WORKSPACE/.env
+ln -sf "$REPO_DIR/.env" "$WORKSPACE/.env" 2>/dev/null || true
 
 # 11. Launch onboarding wizard
 echo ""
