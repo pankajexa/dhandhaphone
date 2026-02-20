@@ -24,19 +24,19 @@ TTS_RESPONSE=$(curl -s -X POST "${BASE_URL}/text-to-speech" \
   -H "API-Subscription-Key: ${SARVAM_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
-    "inputs": ["Good morning. Yesterday your shop had total revenue of thirty-eight thousand across twelve transactions. Two payments are overdue."],
+    "text": "Good morning. Yesterday your shop had total revenue of thirty-eight thousand across twelve transactions. Two payments are overdue.",
     "target_language_code": "en-IN",
-    "speaker": "arvind",
-    "model": "bulbul:v3",
-    "enable_preprocessing": true
+    "speaker": "shubh",
+    "model": "bulbul:v3"
   }')
 
-# Check if response has audio
-if echo "$TTS_RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d.get('audios',[None])[0]" 2>/dev/null; then
+# Check if response has audio (v3 returns "audio", v2 returned "audios")
+if echo "$TTS_RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d.get('audio') or d.get('audios',[None])[0]" 2>/dev/null; then
   echo "$TTS_RESPONSE" | python3 -c "
 import sys, json, base64
 data = json.load(sys.stdin)
-audio = base64.b64decode(data['audios'][0])
+audio_b64 = data.get('audio') or data.get('audios',[''])[0]
+audio = base64.b64decode(audio_b64)
 with open('/tmp/test-tts-en.wav', 'wb') as f:
     f.write(audio)
 print(f'   ✅ Generated {len(audio)} bytes of audio')
@@ -59,18 +59,18 @@ TTS_HI=$(curl -s -X POST "${BASE_URL}/text-to-speech" \
   -H "API-Subscription-Key: ${SARVAM_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
-    "inputs": ["Suprabhat. Kal aapki dukaan mein kul revenue untalees hazaar raha, barah transactions mein."],
+    "text": "Suprabhat. Kal aapki dukaan mein kul revenue untalees hazaar raha, barah transactions mein.",
     "target_language_code": "hi-IN",
-    "speaker": "meera",
-    "model": "bulbul:v3",
-    "enable_preprocessing": true
+    "speaker": "shubh",
+    "model": "bulbul:v3"
   }')
 
-if echo "$TTS_HI" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d.get('audios',[None])[0]" 2>/dev/null; then
+if echo "$TTS_HI" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d.get('audio') or d.get('audios',[None])[0]" 2>/dev/null; then
   echo "$TTS_HI" | python3 -c "
 import sys, json, base64
 data = json.load(sys.stdin)
-audio = base64.b64decode(data['audios'][0])
+audio_b64 = data.get('audio') or data.get('audios',[''])[0]
+audio = base64.b64decode(audio_b64)
 with open('/tmp/test-tts-hi.wav', 'wb') as f:
     f.write(audio)
 print(f'   ✅ Generated {len(audio)} bytes of audio')
@@ -102,7 +102,7 @@ if [ -n "$TEST_AUDIO" ]; then
   STT_RESPONSE=$(curl -s -X POST "${BASE_URL}/speech-to-text" \
     -H "API-Subscription-Key: ${SARVAM_KEY}" \
     -F "file=@${TEST_AUDIO}" \
-    -F "language_code=auto" \
+    -F "language_code=unknown" \
     -F "model=saaras:v3")
 
   echo "   STT Result:"
@@ -117,7 +117,7 @@ HEALTH=$(curl -s -o /dev/null -w "%{http_code}" \
   -X POST "${BASE_URL}/text-to-speech" \
   -H "API-Subscription-Key: ${SARVAM_KEY}" \
   -H "Content-Type: application/json" \
-  -d '{"inputs": ["test"], "target_language_code": "en-IN", "speaker": "arvind", "model": "bulbul:v3"}')
+  -d '{"text": "test", "target_language_code": "en-IN", "speaker": "shubh", "model": "bulbul:v3"}')
 
 if [ "$HEALTH" = "200" ]; then
   echo "   ✅ Sarvam API is reachable and authenticated."
